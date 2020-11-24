@@ -35,93 +35,101 @@ namespace Charts.Shared.Data.Context
 
         private static void FillRapair(string path, DataContext context)
         {
-            if (path != null)
+            if (!context.DicRepairPlace.Any())
             {
-                try
+                if (path != null)
                 {
-                    FileStream stream = File.Open(path + "Справочник_Место_ремонта.xls", FileMode.Open, FileAccess.Read);
-                    IExcelDataReader excelReader = ExcelReaderFactory.CreateBinaryReader(stream);
-
-
-                    while (excelReader.Read())
+                    try
                     {
-                        try
-                        {
-                            DicRepairPlace valuePropertyOfObject = new DicRepairPlace();
+                        FileStream stream = File.Open(path + "Справочник_Место_ремонта.xls", FileMode.Open, FileAccess.Read);
+                        IExcelDataReader excelReader = ExcelReaderFactory.CreateBinaryReader(stream);
 
-                            var name = excelReader.GetValue(0);
-                            if (name != null)
-                            {
-                                valuePropertyOfObject.NameRu = name.ToString().Trim();
-                            }
-                            else
-                            {
-                                valuePropertyOfObject.NameRu = string.Empty;
-                            }
-                            context.DicRepairPlace.AddAsync(valuePropertyOfObject);
-                        }
-                        catch (Exception exception)
+
+                        while (excelReader.Read())
                         {
-                            string ex = exception.Message;
-                            throw;
+                            try
+                            {
+                                DicRepairPlace valuePropertyOfObject = new DicRepairPlace();
+
+                                var name = excelReader.GetValue(0);
+                                if (name != null)
+                                {
+                                    valuePropertyOfObject.NameRu = name.ToString().Trim();
+                                }
+                                else
+                                {
+                                    valuePropertyOfObject.NameRu = string.Empty;
+                                }
+                                context.DicRepairPlace.AddAsync(valuePropertyOfObject);
+                            }
+                            catch (Exception exception)
+                            {
+                                string ex = exception.Message;
+                                throw;
+                            }
                         }
+                        context.SaveChanges();
+                        excelReader.Close();
                     }
-                    context.SaveChanges();
-                    excelReader.Close();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
                 }
             }
+           
         }
         private static void FillContragents(string path, DataContext context)
         {
-            if (path != null)
+            if (!context.DicContractors.Any())
             {
-                try
+                if (path != null)
                 {
-                    FileStream stream = File.Open(path + "Справочник_контрагенты.xls", FileMode.Open, FileAccess.Read);
-                    IExcelDataReader excelReader = ExcelReaderFactory.CreateBinaryReader(stream);
-
-
-                    while (excelReader.Read())
+                    try
                     {
-                        try
-                        {
-                            DicContractors valuePropertyOfObject = new DicContractors();
+                        FileStream stream = File.Open(path + "Справочник_контрагенты.xls", FileMode.Open, FileAccess.Read);
+                        IExcelDataReader excelReader = ExcelReaderFactory.CreateBinaryReader(stream);
 
-                            var name = excelReader.GetValue(0);
-                            if (name != null)
-                            {
-                                valuePropertyOfObject.NameRu = name.ToString().Trim();
-                            }
-                            else
-                            {
-                                valuePropertyOfObject.NameRu = string.Empty;
-                            }
-                            context.DicContractors.AddAsync(valuePropertyOfObject);
-                        }
-                        catch (Exception exception)
+
+                        while (excelReader.Read())
                         {
-                            string ex = exception.Message;
-                            throw;
+                            try
+                            {
+                                DicContractors valuePropertyOfObject = new DicContractors();
+
+                                var name = excelReader.GetValue(0);
+                                if (name != null)
+                                {
+                                    valuePropertyOfObject.NameRu = name.ToString().Trim();
+                                }
+                                else
+                                {
+                                    valuePropertyOfObject.NameRu = string.Empty;
+                                }
+                                context.DicContractors.AddAsync(valuePropertyOfObject);
+                            }
+                            catch (Exception exception)
+                            {
+                                string ex = exception.Message;
+                                throw;
+                            }
                         }
+                        context.SaveChanges();
+                        excelReader.Close();
                     }
-                    context.SaveChanges();
-                    excelReader.Close();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        throw;
+                    }
                 }
             }
+           
         }
         private static void FillDefects(string path, DataContext context)
         {
-            if (path != null)
+            if (path != null && !context.DicDefect.Any())
             {
                 try
                 {

@@ -13,7 +13,7 @@ namespace Charts.Shared.Logic
         }
 
 
-        public BaseRepo<T> Base<T>() where T : BaseEntity
+        public BaseRepo<T> Of<T>() where T : BaseEntity
         {
             return new BaseRepo<T>(_context);
         }

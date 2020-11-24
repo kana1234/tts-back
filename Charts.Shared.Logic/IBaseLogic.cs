@@ -5,6 +5,6 @@ namespace Charts.Shared.Logic
 {
     public interface IBaseLogic
     {
-        BaseRepo<T> Base<T>() where T : BaseEntity;
+        BaseRepo<T> Of<T>() where T : BaseEntity;
     }
 }

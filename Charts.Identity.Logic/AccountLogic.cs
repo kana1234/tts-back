@@ -26,7 +26,7 @@ namespace Charts.Identity.Logic
 
         public async Task<object> Login(LoginInDto dto)
         {
-            var user = await _baseLogic.Base<User>()
+            var user = await _baseLogic.Of<User>()
                 .GetQueryable(x => x.Login == dto.Login && !x.IsDeleted)
                 .Include(x => x.UserRoles)
                 .ThenInclude(x => x.Role)
@@ -44,7 +44,7 @@ namespace Charts.Identity.Logic
                 user.PasswordTryCount++;
                 if (user.PasswordTryCount >= 5)
                     user.IsBlocked = true;
-                await _baseLogic.Base<User>().Update(user);
+                await _baseLogic.Of<User>().Update(user);
                 throw new ArgumentException("Вами введен некорректный пароль. Введите пароль еще раз");
             }
 
@@ -57,7 +57,7 @@ namespace Charts.Identity.Logic
             var refreshToken = _identityLogic.GenerateRefreshToken(user);
 
             user.RefreshToken = refreshToken;
-            await _baseLogic.Base<User>().Update(user);
+            await _baseLogic.Of<User>().Update(user);
             return new
             {
                 accessToken,
@@ -75,7 +75,7 @@ namespace Charts.Identity.Logic
             if (value == default || !Guid.TryParse(value, out Guid userId))
                 throw new UnauthorizedAccessException();
 
-            var user = await _baseLogic.Base<User>().GetQueryable(x => x.Id == userId)
+            var user = await _baseLogic.Of<User>().GetQueryable(x => x.Id == userId)
                 .Include(x => x.UserRoles)
                 .ThenInclude(x => x.Role)
                 .FirstOrDefaultAsync();
@@ -87,7 +87,7 @@ namespace Charts.Identity.Logic
             var accessToken = _identityLogic.GenerateAccessToken(user);
             var refreshToken = _identityLogic.GenerateRefreshToken(user);
             user.RefreshToken = refreshToken;
-            await _baseLogic.Base<User>().Update(user);
+            await _baseLogic.Of<User>().Update(user);
             return new
             {
                 accessToken,
@@ -98,7 +98,7 @@ namespace Charts.Identity.Logic
         public async Task<Guid> Register(AdditionRegisterInDto model)
         {
             var _ = model as AdditionRegisterInDto;
-            var result = await _baseLogic.Base<User>().GetQueryable(x => x.Login == _.Login)
+            var result = await _baseLogic.Of<User>().GetQueryable(x => x.Login == _.Login)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
             if (result != default)
@@ -113,19 +113,19 @@ namespace Charts.Identity.Logic
                 Password = HashPwd(_.Password),
                 Audience = PortalEnum.Ext
             };
-            var role = await _baseLogic.Base<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
+            var role = await _baseLogic.Of<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
             user.UserRoles.Add(new UserRole
             {
                 RoleId = role.Id
             });
-            return await _baseLogic.Base<User>().Add(user);
+            return await _baseLogic.Of<User>().Add(user);
         }
 
       
 
         public async Task<bool> GetByIdentifier(string login)
         {
-            var _ = await _baseLogic.Base<User>().GetQueryable(x => x.Login == login && !x.IsDeleted).CountAsync();
+            var _ = await _baseLogic.Of<User>().GetQueryable(x => x.Login == login && !x.IsDeleted).CountAsync();
             return _ > 0;
         }
 

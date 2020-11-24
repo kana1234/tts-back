@@ -25,7 +25,7 @@ namespace Charts.Shared.Logic.User
         }
         public async Task<object> UserRoles(Guid userId)
         {
-            var _ = await _baseLogic.Base<UserRole>().GetQueryable(x => !x.IsDeleted && x.UserId == userId)
+            var _ = await _baseLogic.Of<UserRole>().GetQueryable(x => !x.IsDeleted && x.UserId == userId)
                 .AsNoTracking()
                 .Include(x => x.Role)
                 .Select(x => new
@@ -40,7 +40,7 @@ namespace Charts.Shared.Logic.User
 
         public async Task<object> GetAllUsers()
         {
-            var _ = await _baseLogic.Base<Data.Context.User>().GetQueryable(x => !x.IsDeleted)
+            var _ = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => !x.IsDeleted)
                 .AsNoTracking()
                 .Include(x => x.UserRoles).ThenInclude(a=>a.Role)
                 .Select(a=>new UserDto
@@ -66,7 +66,7 @@ namespace Charts.Shared.Logic.User
 
         public async Task<AdditionRegisterInDto> GetUser(string login)
         {
-            var result = await _baseLogic.Base<Data.Context.User>().GetQueryable(x => x.Login == login && !x.IsDeleted)
+            var result = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.Login == login && !x.IsDeleted)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
@@ -84,13 +84,13 @@ namespace Charts.Shared.Logic.User
         {
             try
             {
-                var result = await _baseLogic.Base<Data.Context.User>().GetQueryable(x => x.Login == login)
+                var result = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.Login == login)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
                 if (result != null)
                 {
                     result.IsDeleted = true;
-                    await _baseLogic.Base<Data.Context.User>().Update(result);
+                    await _baseLogic.Of<Data.Context.User>().Update(result);
                 }
 
                 return true;
@@ -106,10 +106,10 @@ namespace Charts.Shared.Logic.User
         public async Task<bool> AddUser(AdditionRegisterInDto model)
         {
             var _ = model as AdditionRegisterInDto;
-            var result = await _baseLogic.Base<Data.Context.User>().GetQueryable(x => x.Login == _.Login)
+            var result = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.Login == _.Login)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
-            var role = await _baseLogic.Base<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
+            var role = await _baseLogic.Of<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
             if (result != default)
             {
                 return false;
@@ -130,7 +130,7 @@ namespace Charts.Shared.Logic.User
                 {
                     RoleId = role.Id
                 });
-                await _baseLogic.Base<Data.Context.User>().Add(user);
+                await _baseLogic.Of<Data.Context.User>().Add(user);
                 return true;
             }
 
@@ -140,18 +140,18 @@ namespace Charts.Shared.Logic.User
         public async Task<bool> UpdateUser(AdditionShortRegisterInDto model)
         {
             var _ = model as AdditionShortRegisterInDto;
-            var result = await _baseLogic.Base<Data.Context.User>().GetQueryable(x => x.Login == _.Login)
+            var result = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.Login == _.Login)
                 .Include(a => a.UserRoles).ThenInclude(a => a.Role)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
-            var role = await _baseLogic.Base<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
+            var role = await _baseLogic.Of<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
             if (result != default)
             {
                 result.LastName = _.LastName;
                 result.FirstName = _.FirstName;
                 result.MiddleName = _.MiddleName;
                 result.UserRoles.FirstOrDefault().RoleId = role.Id;
-                await _baseLogic.Base<Data.Context.User>().Update(result);
+                await _baseLogic.Of<Data.Context.User>().Update(result);
                 return true;
             }
             else
@@ -172,17 +172,17 @@ namespace Charts.Shared.Logic.User
 
         public async Task<object> AddRoleToUser(Guid userId, RoleEnum roleEnum)
         {
-            var role = await _baseLogic.Base<Role>().GetQueryable(x => x.Value == roleEnum).FirstAsync();
+            var role = await _baseLogic.Of<Role>().GetQueryable(x => x.Value == roleEnum).FirstAsync();
             UserRole userRole = new UserRole();
             userRole.UserId = userId;
             userRole.RoleId = role.Id;
-            await _baseLogic.Base<UserRole>().Add(userRole);
+            await _baseLogic.Of<UserRole>().Add(userRole);
             return true;
         }
 
         public async Task<List<UserRole>> GetUsersByRoleBranch(RoleEnum roleEnum, Guid BranchId)
         {
-            var _ = await _baseLogic.Base<UserRole>().GetQueryable(x => !x.IsDeleted)
+            var _ = await _baseLogic.Of<UserRole>().GetQueryable(x => !x.IsDeleted)
                 .Include(x => x.Role)
                 .Include(x => x.User)
                 .Where(x => x.Role.Value == roleEnum  && !x.User.IsDeleted)

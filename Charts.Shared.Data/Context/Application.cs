@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Charts.Shared.Data.Context.Dictionary;
+using Charts.Shared.Data.Primitives;
 
 namespace Charts.Shared.Data.Context
 {
     public class Application : BaseEntity
     {
+        public Guid UserId { get; set; }
+        [ForeignKey(nameof(UserId))]
+        public User User { get; set; }
+
         public string Number { get; set; }
         public int CarriageNumber { get; set; }
 
@@ -22,7 +27,7 @@ namespace Charts.Shared.Data.Context
         [ForeignKey(nameof(DefectId))]
         public DicDefect Defect { get; set; }
         public Guid? DefectId { get; set; }
-
+        public ApplicationTypeEnum Status { get; set; }
         public DateTime ReleaseDate { get; set; }
         public ICollection<Remarks> Remarks { get; private set; } = new HashSet<Remarks>();
     }
