@@ -10,8 +10,36 @@
         /// </summary>
         Admin = 1,
         /// <summary>
-        /// Пользователь
+        /// Тор специалист
         /// </summary>
-        Client = 2
+        TorSpecialist,
+        /// <summary>
+        /// Экономист
+        /// </summary>
+        Economist,
+        /// <summary>
+        /// отдел продаж
+        /// </summary>
+        SalesDepartment,
+        /// <summary>
+        /// ревизиональная служба
+        /// </summary>
+        AuditService,
+
+        /// <summary>
+        /// Контрагент
+        /// </summary>
+        Counterparty,
+
+        /// <summary>
+        /// Менеджер отдела тор
+        /// </summary>
+        TorManager,
+
+        /// <summary>
+        /// Казначей
+        /// </summary>
+        Treasurer
+
     }
 }

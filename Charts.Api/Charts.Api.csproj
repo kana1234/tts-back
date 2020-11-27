@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="WorkflowCore" Version="3.3.2" />
+    <PackageReference Include="WorkflowCore.Persistence.SqlServer" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Charts.Logic\Charts.Logic.csproj" />
     <ProjectReference Include="..\Charts.Shared.Api\Charts.Shared.Api.csproj" />
   </ItemGroup>

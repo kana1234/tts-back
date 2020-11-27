@@ -13,4 +13,8 @@
     <ProjectReference Include="..\Charts.Shared.Logic\Charts.Shared.Logic.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\" />
+  </ItemGroup>
+
 </Project>

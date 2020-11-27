@@ -8,17 +8,16 @@ namespace Charts.Shared.Logic.Models.Applciation
     public class ApplicationOutDto
     {
         public Guid Id { get; set; }
-        public Guid UserId { get; set; }
-        public Data.Context.User User { get; set; }
         public string ClientFullName { get; set; }
         public DateTime DateCreated { get; set; }
-        public ApplicationTypeEnum Status { get; set; }
+        public ApplicationStatusEnum Status { get; set; }
         public string StatusTitle { get; set; }
         public string Number { get; set; }
         public int CarriageNumber { get; set; }
-        public Guid? RepairPlaceId { get; set; }
-        public Guid? ContractorsId { get; set; }
-        public Guid? DefectId { get; set; }
-        public List<Remarks> Remarks { get; set; }
+        public string RepairPlaceName { get; set; }
+        public string ContractorsName { get; set; }
+        public string DefectName { get; set; }
+        public DateTime? ReleaseDate { get; set; }
+        public DateTime? FinishDate { get; set; }
     }
 }

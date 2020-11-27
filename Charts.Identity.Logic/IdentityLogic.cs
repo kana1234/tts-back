@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Charts.Identity.Logic
 {
@@ -75,8 +76,8 @@ namespace Charts.Identity.Logic
                     new Claim("lastName", user.LastName??string.Empty),
                     new Claim("firstName", user.FirstName??string.Empty),
                     new Claim("middleName", user.MiddleName??string.Empty),
-                    new Claim("roles", string.Join(",", user.Roles.Select(x => x.Value))),
-                    new Claim(ClaimsIdentity.DefaultRoleClaimType, string.Join(",", user.Roles.Select(x => (int)x.Value)))
+                    new Claim(ClaimsIdentity.DefaultRoleClaimType, string.Join(",", user.Roles.Select(x => (int)x.Value))),
+                    new Claim("roles", JsonConvert.SerializeObject(user.Roles.Select(role => (int) role.Value).ToArray())??string.Empty)
                 };
                 ClaimsIdentity claimsIdentity =
                     new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);

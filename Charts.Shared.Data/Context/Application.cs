@@ -12,6 +12,10 @@ namespace Charts.Shared.Data.Context
         [ForeignKey(nameof(UserId))]
         public User User { get; set; }
 
+        public Guid? ContragentUserId { get; set; }
+        [ForeignKey(nameof(ContragentUserId))]
+        public User ContragentUser { get; set; }
+
         public string Number { get; set; }
         public int CarriageNumber { get; set; }
 
@@ -27,8 +31,9 @@ namespace Charts.Shared.Data.Context
         [ForeignKey(nameof(DefectId))]
         public DicDefect Defect { get; set; }
         public Guid? DefectId { get; set; }
-        public ApplicationTypeEnum Status { get; set; }
+        public ApplicationStatusEnum Status { get; set; }
         public DateTime ReleaseDate { get; set; }
+        public DateTime? FinishDate { get; set; }
         public ICollection<Remarks> Remarks { get; private set; } = new HashSet<Remarks>();
     }
 }

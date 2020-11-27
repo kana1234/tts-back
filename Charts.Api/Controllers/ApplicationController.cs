@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Charts.Logic.Application;
 using Charts.Shared.Api.Controllers;
+using Charts.Shared.Data.Primitives;
+using Charts.Shared.Logic.Application;
 using Charts.Shared.Logic.Models.Applciation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,9 @@ namespace Charts.Api.Controllers
     /// Контроллер авторизации
     /// </summary>
 
-    [AllowAnonymous]
     public class ApplicationController : BaseController
     {
-        private readonly IApplicationLogic _applicationLogic;
+        private readonly Shared.Logic.Application.IApplicationLogic _applicationLogic;
 
         public ApplicationController(IApplicationLogic applicationLogic)
         {
@@ -25,12 +25,12 @@ namespace Charts.Api.Controllers
         /// Получение списка заявлений
         /// </summary>
         /// <returns></returns>
-        [HttpPost(nameof(GetApplications))]
-        public IActionResult GetApplications()
+        [HttpGet(nameof(GetApplications))]
+        public IActionResult GetApplications(ApplicationStatusEnum status)
         {
             try
             {
-                var res = _applicationLogic.GetApplications(CurrentUserId);
+                var res = _applicationLogic.GetApplications(CurrentUserId, status);
                 return Ok(res);
             }
             catch (Exception e)
@@ -72,37 +72,37 @@ namespace Charts.Api.Controllers
         //    }
         //}
 
-        [HttpPost("SetStatus")]
-        public async Task<IActionResult> SetStatus(LoanApplicationStatusInDto model)
-        {
-            try
-            {
-                await _applicationLogic.SetStatus(model.ApplicationId, model.Status);
+        //[HttpPost("SetStatus")]
+        //public async Task<IActionResult> SetStatus(LoanApplicationStatusInDto model)
+        //{
+        //    try
+        //    {
+        //        await _applicationLogic.SetStatus(model.ApplicationId, model.Status);
 
-                return Ok(true);
-            }
-            catch (Exception e)
-            {
-                return ExceptionResult(e);
-            }
-        }
+        //        return Ok(true);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return ExceptionResult(e);
+        //    }
+        //}
 
-        [HttpGet("GetClientApllications")]
-        public IActionResult GetClientApllications([FromQuery] LoanApplicationFilter filter)
-        {
-            try
-            {
-                if (filter.PageSize < 1) return NoContent();
+        //[HttpGet("GetClientApllications")]
+        //public IActionResult GetClientApllications([FromQuery] LoanApplicationFilter filter)
+        //{
+        //    try
+        //    {
+        //        if (filter.PageSize < 1) return NoContent();
 
-                var res = _applicationLogic.GetApplications(filter, CurrentUserId);
+        //        var res = _applicationLogic.GetApplications(filter, CurrentUserId);
 
-                return Ok(res);
-            }
-            catch (Exception e)
-            {
-                return ExceptionResult(e);
-            }
-        }
+        //        return Ok(res);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return ExceptionResult(e);
+        //    }
+        //}
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetApplication(Guid id)

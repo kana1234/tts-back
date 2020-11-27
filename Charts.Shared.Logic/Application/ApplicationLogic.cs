@@ -21,14 +21,12 @@ namespace Charts.Shared.Logic.Application
         private readonly IUserLogic _userLogic;
 
         private readonly IBaseLogic _baseLogic;
-        private IApplicationLogic _loanApplicationLogicImplementation;
 
-        public ApplicationLogic(IDictionaryLogic dictionarylogic, IUserLogic userLogic, IBaseLogic baseLogic, IApplicationLogic loanApplicationLogicImplementation)
+        public ApplicationLogic(IDictionaryLogic dictionarylogic, IUserLogic userLogic, IBaseLogic baseLogic)
         {
             _dictionarylogic = dictionarylogic;
             _userLogic = userLogic;
             _baseLogic = baseLogic;
-            _loanApplicationLogicImplementation = loanApplicationLogicImplementation;
         }
 
         public async Task<Guid> InsertOrUpdateApplication(ApplicationInDto model,Guid userId)
@@ -83,138 +81,146 @@ namespace Charts.Shared.Logic.Application
             await SetRegNumber(new RegNumberInDto { Id = applicationId, RegNumber = result });
         }
 
-        /// <summary>
-        /// Gets Applications by filter
-        /// </summary>
-        /// <param name="filter"></param>
-        /// <returns>TotalItems, Items: List<LoanApplicationOutDto></returns>
-        public virtual object GetApplications(LoanApplicationFilter filter)
+        ///// <summary>
+        ///// Gets Applications by filter
+        ///// </summary>
+        ///// <param name="filter"></param>
+        ///// <returns>TotalItems, Items: List<LoanApplicationOutDto></returns>
+        //public virtual object GetApplications(LoanApplicationFilter filter)
+        //{
+
+        //    var query = _baseLogic.Of<Data.Context.Application>().GetQueryable
+        //    (x => !x.IsDeleted).AsNoTracking();
+
+        //    var search = !string.IsNullOrEmpty(filter.Search) ? filter.Search.ToLower().Trim() : null;
+        //    if (search != null)
+        //        query = query
+        //            .Include(x => x.User)
+        //            .Include(x => x.Remarks)
+        //            .Where(x =>
+        //            (x.User.LastName + " " + x.User.FirstName + " " + x.User.MiddleName).ToLower().Trim().Contains(search)
+        //             || x.User.Login.ToLower().Trim().Contains(search));
+
+        //    var res = query
+        //            .OrderBy(filter.Column, nameof(Data.Context.Application.Id), filter.Direction)
+        //            .Skip(filter.Skip)
+        //            .Take(filter.PageSize)
+        //            .Select(x => new ApplicationOutDto()
+        //            {
+        //                Id = x.Id,
+        //                UserId = x.UserId,
+        //                ClientFullName = x.User.FullName,
+        //                Number = x.Number,
+        //                DateCreated = x.CreatedDate,
+        //                Status = x.Status,
+        //                StatusTitle = GetStatusTitle(x.Status),
+        //                CarriageNumber =x.CarriageNumber,
+        //                ContractorsId = x.ContractorsId,
+        //                DefectId = x.DefectId,
+        //                RepairPlaceId = x.RepairPlaceId,
+        //                User = x.User,
+        //                Remarks = x.Remarks.ToList()
+        //            })
+        //            .ToList();
+
+        //    return new
+        //    {
+        //        TotalItems = query.Count(),
+        //        Items = res
+        //    };
+        //}
+
+
+        ///// <summary>
+        ///// Gets Applications By UserId
+        ///// </summary>
+        ///// <param name="filter"></param>
+        ///// <param name="userId"></param>
+        ///// <returns></returns>
+        //public object GetApplications(LoanApplicationFilter filter, Guid userId)
+        //{
+        //    var query = _baseLogic.Of<Data.Context.Application>().GetQueryable
+        //    (x => x.UserId == userId && !x.IsDeleted).AsNoTracking();
+
+        //    var res = query
+        //            .OrderBy(filter.Column, nameof(Data.Context.Application.Id), filter.Direction)
+        //            .Skip(filter.Skip)
+        //            .Take(filter.PageSize)
+        //            .Select(x => new ApplicationOutDto()
+        //            {
+        //                Id = x.Id,
+        //                UserId = x.UserId,
+        //                ClientFullName = x.User.FullName,
+        //                Number = x.Number,
+        //                DateCreated = x.CreatedDate,
+        //                Status = x.Status,
+        //                StatusTitle = GetStatusTitle(x.Status),
+        //                CarriageNumber = x.CarriageNumber,
+        //                ContractorsId = x.ContractorsId,
+        //                DefectId = x.DefectId,
+        //                RepairPlaceId = x.RepairPlaceId,
+        //                User = x.User
+
+        //            })
+        //            .ToList();
+
+        //    return new
+        //    {
+        //        TotalItems = query.Count(),
+        //        Items = res
+        //    };
+        //}
+
+        public async Task<object> GetApplications(Guid userId, ApplicationStatusEnum status)
         {
+            var _ =  _baseLogic.Of<Data.Context.Application>().GetQueryable
+                (x => x.UserId == userId && !x.IsDeleted && x.Status == status)
+                .Include(a=>a.User)
+                .Include(a=>a.Contractors)
+                .Include(a=>a.RepairPlace)
+                .Include(a => a.Defect)
+                .AsNoTracking();
 
-            var query = _baseLogic.Of<Data.Context.Application>().GetQueryable
-            (x => !x.IsDeleted).AsNoTracking();
-
-            var search = !string.IsNullOrEmpty(filter.Search) ? filter.Search.ToLower().Trim() : null;
-            if (search != null)
-                query = query
-                    .Include(x => x.User)
-                    .Include(x => x.Remarks)
-                    .Where(x =>
-                    (x.User.LastName + " " + x.User.FirstName + " " + x.User.MiddleName).ToLower().Trim().Contains(search)
-                     || x.User.Login.ToLower().Trim().Contains(search));
-
-            var res = query
-                    .OrderBy(filter.Column, nameof(Data.Context.Application.Id), filter.Direction)
-                    .Skip(filter.Skip)
-                    .Take(filter.PageSize)
-                    .Select(x => new ApplicationOutDto()
-                    {
-                        Id = x.Id,
-                        UserId = x.UserId,
-                        ClientFullName = x.User.FullName,
-                        Number = x.Number,
-                        DateCreated = x.CreatedDate,
-                        Status = x.Status,
-                        StatusTitle = GetStatusTitle(x.Status),
-                        CarriageNumber =x.CarriageNumber,
-                        ContractorsId = x.ContractorsId,
-                        DefectId = x.DefectId,
-                        RepairPlaceId = x.RepairPlaceId,
-                        User = x.User,
-                        Remarks = x.Remarks.ToList()
-                    })
-                    .ToList();
-
-            return new
-            {
-                TotalItems = query.Count(),
-                Items = res
-            };
-        }
-
-
-        /// <summary>
-        /// Gets Applications By UserId
-        /// </summary>
-        /// <param name="filter"></param>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        public object GetApplications(LoanApplicationFilter filter, Guid userId)
-        {
-            var query = _baseLogic.Of<Data.Context.Application>().GetQueryable
-            (x => x.UserId == userId && !x.IsDeleted).AsNoTracking();
-
-            var res = query
-                    .OrderBy(filter.Column, nameof(Data.Context.Application.Id), filter.Direction)
-                    .Skip(filter.Skip)
-                    .Take(filter.PageSize)
-                    .Select(x => new ApplicationOutDto()
-                    {
-                        Id = x.Id,
-                        UserId = x.UserId,
-                        ClientFullName = x.User.FullName,
-                        Number = x.Number,
-                        DateCreated = x.CreatedDate,
-                        Status = x.Status,
-                        StatusTitle = GetStatusTitle(x.Status),
-                        CarriageNumber = x.CarriageNumber,
-                        ContractorsId = x.ContractorsId,
-                        DefectId = x.DefectId,
-                        RepairPlaceId = x.RepairPlaceId,
-                        User = x.User
-
-                    })
-                    .ToList();
-
-            return new
-            {
-                TotalItems = query.Count(),
-                Items = res
-            };
-        }
-
-        public async Task<object> GetApplications(Guid userId)
-        {
-            var query =  _baseLogic.Of<Data.Context.Application>().GetQueryable
-                (x => x.UserId == userId && !x.IsDeleted).AsNoTracking();
-
-            var res = query
+            var res = _
                 .Select(x => new ApplicationOutDto()
                 {
                     Id = x.Id,
-                    UserId = x.UserId,
                     ClientFullName = x.User.FullName,
                     Number = x.Number,
                     DateCreated = x.CreatedDate,
                     Status = x.Status,
                     StatusTitle = GetStatusTitle(x.Status),
                     CarriageNumber = x.CarriageNumber,
-                    ContractorsId = x.ContractorsId,
-                    DefectId = x.DefectId,
-                    RepairPlaceId = x.RepairPlaceId,
-                    User = x.User
-
+                    ContractorsName = x.Contractors.NameRu,
+                    DefectName = x.Defect.NameRu,
+                    RepairPlaceName = x.RepairPlace.NameRu,
+                    FinishDate = x.FinishDate,
+                    ReleaseDate =x.ReleaseDate
                 })
                 .ToList();
 
             return new
             {
-                TotalItems = query.Count(),
+                TotalItems = _.Count(),
                 Items = res
             };
         }
 
 
 
-        private static string GetStatusTitle(ApplicationTypeEnum appEnum)
+        private static string GetStatusTitle(ApplicationStatusEnum appEnum)
         {
 
             switch (appEnum)
             {
-                case ApplicationTypeEnum.NEW: return "Новая заявка";
-                case ApplicationTypeEnum.IN_WORK: return "В работе";
-                case ApplicationTypeEnum.REMARK: return "На доработке";
-                case ApplicationTypeEnum.FINISHED: return "Выполнен";
+                case ApplicationStatusEnum.Draft: return "Черновик";
+                case ApplicationStatusEnum.InWork: return "В работе";
+                case ApplicationStatusEnum.DocumentCollect: return "Сбор документации";
+                case ApplicationStatusEnum.Agreement: return "Согласование";
+                case ApplicationStatusEnum.PaymentFormation: return "Формирование заявки на оплату";
+                case ApplicationStatusEnum.Payment: return "На оплате";
+                case ApplicationStatusEnum.ReWork: return "На доработке";
+                case ApplicationStatusEnum.Paid: return "Оплачен";
                 default: return "";
             }
         }
@@ -254,14 +260,14 @@ namespace Charts.Shared.Logic.Application
             };
         }
 
-        public async Task SetStatus(Guid applicationId, ApplicationTypeEnum status)
-        {
+        //public async Task SetStatus(Guid applicationId, ApplicationTypeEnum status)
+        //{
 
-            var application = await _baseLogic.Of<Data.Context.Application>().GetById(applicationId);
-            application.Status = status;
+        //    var application = await _baseLogic.Of<Data.Context.Application>().GetById(applicationId);
+        //    application.Status = status;
 
-            await _baseLogic.Of<Data.Context.Application>().Update(application);
-        }
+        //    await _baseLogic.Of<Data.Context.Application>().Update(application);
+        //}
 
         public async Task<object> Statistics()
         {

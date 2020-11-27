@@ -160,7 +160,7 @@ namespace Charts.Admin.Api.Controllers
         }
 
         [HttpPost("AddRoleToUser")]
-        [UserRoleAttributeExtension(RoleEnum.Admin, RoleEnum.Client)]
+        [UserRoleAttributeExtension(RoleEnum.Admin)]
         public async Task AddRoleToUser(Guid UserId, RoleEnum roleEnum)
         {
             try
