@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using System.Reflection;
+using Charts.Shared.Logic.Workflow.Steps;
 
 namespace Charts.Identity.Api
 {

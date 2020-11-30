@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using Charts.Shared.Data.Context.Dictionary;
 
 namespace Charts.Shared.Data.Context
 {
@@ -74,5 +75,9 @@ namespace Charts.Shared.Data.Context
 
         [NotMapped]
         public ICollection<Role> Roles => UserRoles.Select(x => x.Role).ToList();
+
+        [ForeignKey(nameof(RepairPlaceId))]
+        public DicRepairPlace RepairPlace { get; set; }
+        public Guid? RepairPlaceId { get; set; }
     }
 }

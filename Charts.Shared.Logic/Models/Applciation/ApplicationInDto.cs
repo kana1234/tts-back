@@ -12,16 +12,22 @@ namespace Charts.Shared.Logic.Models.Applciation
     {
         public Guid? Id { get; set; }
         public Guid? UserId { get; set; }
-        public string Number { get; set; }
+
+        [Required]
         public int CarriageNumber { get; set; }
         public Guid? RepairPlaceId { get; set; }
 
         public Guid? ContractorsId { get; set; }
-        public ApplicationTypeEnum Status { get; set; }
+        public ApplicationStatusEnum Status { get; set; }
         public Guid? DefectId { get; set; }
 
         [Required]
         public DateTime ReleaseDate { get; set; }
         public List<Remarks> Remarks { get; set; }
+        public string Description { get; set; }
+
+        [Required]
+        public bool WithReplacement { get; set; } = false;
+        public RepairType RepairType { get; set; }
     }
 }

@@ -45,7 +45,11 @@
         /// <summary>
         /// На доработке
         /// </summary>
-        ReWork
+        ReWork,
+        /// <summary>
+        /// В ремонте
+        /// </summary>
+        InRepair,
 
     }
 }

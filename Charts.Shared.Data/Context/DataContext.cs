@@ -27,6 +27,13 @@ namespace Charts.Shared.Data.Context
         public DbSet<DicRepairPlace> DicRepairPlace { get; set; }
         public DbSet<Remarks> Remarks { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<DocInformation> DocInformation { get; set; }
+        public DbSet<TTSFile> TTSFile { get; set; }
+        
+        public DbSet<ApplicationTask> ApplicationTask { get; set; }
+        
+        public DbSet<ApplicationHistory> ApplicationHistory { get; set; }
+        
 
     }
 }

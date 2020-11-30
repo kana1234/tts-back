@@ -1,9 +1,11 @@
 using Autofac;
 using Charts.Shared.Api;
 using Charts.Shared.Data.Context;
-using Charts.Shared.Data.Mongo.Context;
 using Charts.Shared.Data.Primitives;
+using Charts.Shared.Logic.ApplicationTask;
 using Charts.Shared.Logic.Workflow;
+using Charts.Shared.Logic.Workflow.Data;
+using Charts.Shared.Logic.Workflow.Steps;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,8 +24,10 @@ namespace Charts.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
+          //  services.AddWorkflow(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), true, true));
+           
             base.ConfigureServices(services, new[] { PortalEnum.Int.ToString(), PortalEnum.Ext.ToString() });
-            services.AddWorkflow(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),true,true));
+            
         }
 
         public new void ConfigureContainer(ContainerBuilder containerBuilder)
@@ -36,10 +40,11 @@ namespace Charts.Api
         {
            
             base.Configure(app, loggerFactory, env);
-            var host = app.ApplicationServices.GetService<IWorkflowHost>();
-            host.RegisterWorkflow<ApplicationWorkflow>();
-            host.Start();
-            host.StartWorkflow("TTSWorkflow", 1, null);
+
+            //var host = app.ApplicationServices.GetService<IWorkflowHost>();
+            //host.RegisterWorkflow<Workflows, ApplicationData>();
+            //host.Start();
+            //host.StartWorkflow("TTSWorkflow", 1, null);
         }
     }
 }

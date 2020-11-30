@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Charts.Api.Controllers
 {
-    [AllowAnonymous]
     public class DictionaryController : BaseController
     {
         private readonly IDictionaryLogic _logic;

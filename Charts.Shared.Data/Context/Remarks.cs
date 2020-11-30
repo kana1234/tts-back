@@ -5,8 +5,8 @@ namespace Charts.Shared.Data.Context
 {
     public class Remarks : BaseEntity
     {
-        public string NameRu { get; set; }
-        public string NameKz { get; set; }
+        public string Text { get; set; }
+        public Guid UserId { get; set; }
 
         [ForeignKey(nameof(ApplicationId))]
         public Application Application { get; set; }

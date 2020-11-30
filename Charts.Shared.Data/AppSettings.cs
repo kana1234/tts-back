@@ -3,8 +3,7 @@
     public class AppSettings
     {
         public AuthOption AuthOptions { get; set; }
-        public VolnaOption Volna { get; set; }
-        public MongoConfig MongoConfig { get; set; }
+        public WorkflowConfig WorkflowConfig { get; set; }
     }
 
     public class AuthOption
@@ -16,20 +15,12 @@
         public int LifetimeRefresh { get; set; } = 0;
     }
 
-    public class VolnaOption
-    {
-        public string Url { get; set; }
-        public string AuthUrl { get; set; }
-        public string Login { get; set; }
-        public string Password { get; set; }
-        public string AdminAccessToken { get; set; }
-    }
+   
 
-    public class MongoConfig
+    public class WorkflowConfig
     {
-        public string ConnectionString { get; set; }
-        public string Database { get; set; }
-        public string Database2 { get; set; }
+        public string WorkflowDefinitionId { get; set; }
+        public int Version { get; set; }
     }
 
 }

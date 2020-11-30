@@ -54,6 +54,13 @@ namespace Charts.Shared.Data.Repos
             return await Repo.FindAsync(id);
         }
 
+        public async Task DeleteById(Guid id)
+        {
+           var _ = await Repo.FindAsync(id);
+           _.IsDeleted = true;
+           await Save();
+        }
+
         public async Task Delete(TEntity entity)
         {
             entity.IsDeleted = true;

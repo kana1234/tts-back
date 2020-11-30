@@ -9,7 +9,8 @@ namespace Charts.Shared.Logic.Models.Applciation
     {
         public Guid Id { get; set; }
         public string ClientFullName { get; set; }
-        public DateTime DateCreated { get; set; }
+        public bool IsExpired { get; set; }
+        public string DateCreated { get; set; }
         public ApplicationStatusEnum Status { get; set; }
         public string StatusTitle { get; set; }
         public string Number { get; set; }
@@ -17,7 +18,7 @@ namespace Charts.Shared.Logic.Models.Applciation
         public string RepairPlaceName { get; set; }
         public string ContractorsName { get; set; }
         public string DefectName { get; set; }
-        public DateTime? ReleaseDate { get; set; }
-        public DateTime? FinishDate { get; set; }
+        public string ReleaseDate { get; set; }
+        public string FinishDate { get; set; }
     }
 }

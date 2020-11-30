@@ -18,7 +18,7 @@
         /// </summary>
         Economist,
         /// <summary>
-        /// отдел продаж
+        /// Отдел перв.док.
         /// </summary>
         SalesDepartment,
         /// <summary>
