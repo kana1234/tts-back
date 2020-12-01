@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Charts.Shared.Data.Context;
 using Charts.Shared.Data.Models;
 using Charts.Shared.Data.Primitives;
+using Charts.Shared.Logic.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Charts.Shared.Logic.User
@@ -43,21 +44,27 @@ namespace Charts.Shared.Logic.User
             var _ = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => !x.IsDeleted)
                 .AsNoTracking()
                 .Include(x => x.UserRoles).ThenInclude(a=>a.Role)
+                .Include(a=>a.Contractors)
                 .Select(a=>new UserDto
                     {
                         IsActive = !a.IsBlocked,
                         ActiveString = a.IsBlocked?"Нет":"Да",
                         FullName = a.FullName,
-                        Email = a.Login,
+                        Email = a.Email,
                         LastInviteDate = a.LastInviteDate.HasValue?a.LastInviteDate.Value.ToShortDateString():DateTime.Now.ToShortDateString(),
                         Login = a.Login,
-                        Roles = a.UserRoles.Select(t=>t.Role)
+                        Roles = a.UserRoles.Select(t=>t.Role),
+                        FirstName =a.FirstName,
+                        LastName = a.LastName,
+                        MiddleName = a.MiddleName,
+                        ContractorId = a.ContractorId,
+                        RoleId = a.UserRoles.FirstOrDefault().Role.Value
                 }
                     )
                 .ToListAsync();
             foreach (var item in _)
             {
-                var tempRoles = item.Roles.Distinct().Select(a => (RoleEnum.Admin == a.Value ? "Администратор" : "Пользователь"))
+                var tempRoles = item.Roles.Distinct().Select(a => a.Value.GetDisplayName())
                     .ToList();
                 item.RolesString = tempRoles.Aggregate((c, n) => c + ", " + n);
             }
@@ -75,6 +82,8 @@ namespace Charts.Shared.Logic.User
                 FirstName = result.FirstName,
                 LastName = result.LastName,
                 RoleId = result.Roles.FirstOrDefault()?.Value,
+                ContractorId = result.ContractorId,
+                Email = result.Email,
                 Login = result.Login,
                 MiddleName = result.MiddleName,
             };
@@ -119,11 +128,13 @@ namespace Charts.Shared.Logic.User
                 var user = new Data.Context.User
                 {
                     Login = _.Login,
+                    Email = _.Email,
                     LastName = _.LastName,
                     FirstName = _.FirstName,
                     MiddleName = _.MiddleName,
                     Password = HashPwd(_.Password),
-                    Audience = PortalEnum.Ext
+                    Audience = PortalEnum.Int,
+                    ContractorId = _.ContractorId
                 };
 
                 user.UserRoles.Add(new UserRole
@@ -140,18 +151,23 @@ namespace Charts.Shared.Logic.User
         public async Task<bool> UpdateUser(AdditionShortRegisterInDto model)
         {
             var _ = model as AdditionShortRegisterInDto;
-            var result = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.Login == _.Login)
-                .Include(a => a.UserRoles).ThenInclude(a => a.Role)
+            var result = await _baseLogic.Of<Data.Context.User>().Base()
                 .AsNoTracking()
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(x => x.Login == _.Login);
             var role = await _baseLogic.Of<Role>().Base().FirstOrDefaultAsync(a => a.Value == model.RoleId);
             if (result != default)
             {
                 result.LastName = _.LastName;
                 result.FirstName = _.FirstName;
                 result.MiddleName = _.MiddleName;
-                result.UserRoles.FirstOrDefault().RoleId = role.Id;
+                result.ContractorId = _.ContractorId;
+                result.Email = _.Email;
+                //result.UserRoles.FirstOrDefault().RoleId = role.Id;
                 await _baseLogic.Of<Data.Context.User>().Update(result);
+                var userRole = await _baseLogic.Of<Data.Context.UserRole>().Base()
+                    .FirstOrDefaultAsync(a => a.UserId == result.Id);
+                userRole.RoleId = role.Id;
+                await _baseLogic.Of<Data.Context.UserRole>().Update(userRole);
                 return true;
             }
             else

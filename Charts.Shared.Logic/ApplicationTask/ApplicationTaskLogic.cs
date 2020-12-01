@@ -6,6 +6,7 @@ using Charts.Shared.Data.Context;
 using Charts.Shared.Data.Primitives;
 using Charts.Shared.Logic.Dictionary;
 using Charts.Shared.Logic.User;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WorkflowCore.Interface;
 
@@ -28,26 +29,38 @@ namespace Charts.Shared.Logic.ApplicationTask
         }
         
 
-        public async Task<Guid> InsertLoanApplicationTaskUser(Guid applicationId, Guid userId, RoleEnum role, ApplicationStatusEnum status,string instanceId = null)
+        public async Task<Guid> InsertLoanApplicationTaskUser(Data.Context.Application application, Guid userId, RoleEnum role, ApplicationStatusEnum status,string instanceId = null)
         {
-            if (!string.IsNullOrEmpty(instanceId))
+            try
             {
-                var application =await _baseLogic.Of<Data.Context.Application>().GetById(applicationId);
-                application.Status = status;
-                await _baseLogic.Of<Data.Context.Application>().Update(application);
+                var currentApplication = await _baseLogic.Of<Data.Context.Application>().Base()
+                    .FirstOrDefaultAsync(a => a.Id == application.Id);
+                currentApplication.Status = status;
+                await _baseLogic.Of<Data.Context.Application>().Update(currentApplication);
+                var planEndDate = await GetPlanedEndDatetime(application.Id, status);
+                var _role =  await _baseLogic.Of<Role>().GetQueryable(x => !x.IsDeleted && x.Value == role).Select(x => x.Id)
+                    .FirstOrDefaultAsync();
+                var result = await _baseLogic.Of<Data.Context.ApplicationTask>().Add(
+                    new Data.Context.ApplicationTask
+                    {
+                        ApplicationId = application.Id,
+                        UserId = userId,
+                        RoleId = _role,
+                        AppointmentDate = DateTime.Now,
+                        PlanEndDate = planEndDate,
+                        Status = status
+                    });
+                
+                return result;
             }
-            var planEndDate = await GetPlanedEndDatetime(applicationId, status);
-            return await _baseLogic.Of<Data.Context.ApplicationTask>().Add(
-                new Data.Context.ApplicationTask
-                {
-                    ApplicationId = applicationId,
-                    UserId = userId,
-                    RoleId = _baseLogic.Of<Role>().GetQueryable(x => !x.IsDeleted && x.Value == role).Select(x => x.Id).FirstOrDefault(),
-                    AppointmentDate = DateTime.Now,
-                    PlanEndDate = planEndDate,
-                    Status = status
-                });
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+           
         }
+
 
         public async Task InsertLoanApplicationTaskUserPrevious(Guid applicationId, Guid userId, RoleEnum role, ApplicationStatusEnum status)
         {
@@ -69,13 +82,13 @@ namespace Charts.Shared.Logic.ApplicationTask
             var application = await _baseLogic.Of<Data.Context.Application>().GetById(applicationId);
             switch (status)
             {
-                case ApplicationStatusEnum.InWork:
-                {
-                    if (application.WithReplacement)
-                        return DateTime.Now.AddDays(19);
-                    else
-                        return DateTime.Now.AddDays(9);
-                }
+                //case ApplicationStatusEnum.InRepair:
+                //{
+                //    //if (application.WithReplacement??false)
+                //    //    return DateTime.Now.AddDays(19);
+                //    //else
+                //    //    return DateTime.Now.AddDays(9);
+                //}
                 case ApplicationStatusEnum.DocumentCollect:
                     return DateTime.Now.AddDays(10);
 
@@ -92,23 +105,32 @@ namespace Charts.Shared.Logic.ApplicationTask
 
         public async Task DeleteApplicationTask(Guid taskApplicationId, ApplicationTaskStatusEnum taksStatus, string comment)
         {
-            var task = await _baseLogic.Of<Data.Context.ApplicationTask>().GetById(taskApplicationId);
-            await _baseLogic.Of<ApplicationHistory>().Add(
-                new ApplicationHistory
-                {
-                    Id = task.Id,
-                    CreatedDate = task.CreatedDate,
-                    ModifiedDate = task.ModifiedDate,
-                    IsDeleted = task.IsDeleted,
-                    ApplicationId = task.ApplicationId,
-                    Status = taksStatus,
-                    UserId = task.UserId,
-                    AppointmentDate = task.AppointmentDate,
-                    PlanEndDate = task.PlanEndDate,
-                    FactEndDate = DateTime.Now,
-                    Comment = comment
-                });
-            await _baseLogic.Of<Data.Context.ApplicationTask>().Remove(task);
+            try
+            {
+                var task = await _baseLogic.Of<Data.Context.ApplicationTask>().GetById(taskApplicationId);
+                await _baseLogic.Of<ApplicationHistory>().Add(
+                    new ApplicationHistory
+                    {
+                        Id = task.Id,
+                        CreatedDate = task.CreatedDate,
+                        ModifiedDate = task.ModifiedDate,
+                        IsDeleted = task.IsDeleted,
+                        ApplicationId = task.ApplicationId,
+                        Status = taksStatus,
+                        UserId = task.UserId,
+                        AppointmentDate = task.AppointmentDate,
+                        PlanEndDate = task.PlanEndDate,
+                        FactEndDate = DateTime.Now,
+                        Comment = comment
+                    });
+                await _baseLogic.Of<Data.Context.ApplicationTask>().Delete(task);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+           
         }
 
 

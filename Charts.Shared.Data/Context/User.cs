@@ -58,7 +58,7 @@ namespace Charts.Shared.Data.Context
         public PortalEnum Audience { get; set; }
         /// <summary>
         /// Пароль
-        /// </summary>
+        /// </summary>  
         public string Password { get; set; }
         /// <summary>
         /// Кол-во неудачных попыток ввода пароля
@@ -76,8 +76,8 @@ namespace Charts.Shared.Data.Context
         [NotMapped]
         public ICollection<Role> Roles => UserRoles.Select(x => x.Role).ToList();
 
-        [ForeignKey(nameof(RepairPlaceId))]
-        public DicRepairPlace RepairPlace { get; set; }
-        public Guid? RepairPlaceId { get; set; }
+        [ForeignKey(nameof(ContractorId))]
+        public DicContractors Contractors { get; set; }
+        public Guid? ContractorId { get; set; }
     }
 }

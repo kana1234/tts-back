@@ -41,14 +41,14 @@ namespace Charts.Shared.Logic.Workflow.Application
 
         protected async Task<RoleEnum?> GetRoleByUserId(Guid userId)
         {
-            var roles = await _baseLogic.Of<Shared.Data.Context.User>().Base().FirstOrDefaultAsync(a=>a.Id==userId);
+            var roles = await _baseLogic.Of<Shared.Data.Context.User>().Base().Include(a=>a.UserRoles).ThenInclude(a=>a.Role).FirstOrDefaultAsync(a=>a.Id==userId);
             return roles.Roles.FirstOrDefault()?.Value;
 
         }
 
-        protected async Task<Shared.Data.Context.ApplicationTask> GetCurrentUserTask(Guid userId)
+        protected async Task<Shared.Data.Context.ApplicationTask> GetCurrentUserTask(Guid userId,Guid appId)
         {
-            var task = await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base().FirstOrDefaultAsync(a=>a.UserId==userId && !a.IsDeleted);
+            var task = await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base().FirstOrDefaultAsync(a=>a.UserId==userId && a.ApplicationId== appId && !a.IsDeleted);
             return task;
 
         }
@@ -61,30 +61,40 @@ namespace Charts.Shared.Logic.Workflow.Application
         }
         protected Guid GetUserIdByApplicationIdAndRole(Guid applicationId, RoleEnum role)
         {
-            var task = _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base()
-                .FirstOrDefaultAsync(a => a.ApplicationId == applicationId && (a.Role.Value == role)).Result;
-            if (task == null)
-                task = _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base()
-                    .FirstOrDefaultAsync(a => (a.Role.Value == role)).Result;
-            if (task == null || task.UserId == null)
+            var _ = _baseLogic.Of<Shared.Data.Context.User>().Base()
+                .Include(a=>a.UserRoles).ThenInclude(a=>a.Role)
+                .FirstOrDefaultAsync(a => a.UserRoles.Any(t=>t.Role.Value ==role )).Result;
+            if (_ == null || _.Id == null)
                 throw new Exception("Не удалось найти пользователей");
-            return (Guid)task.UserId;
+            return _.Id;
         }
 
         protected Guid GetAuditServiceOrEconomistByApplicationId(Guid applicationId)
         {
             var task =  _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base()
                 .FirstOrDefaultAsync(a =>
-                    a.ApplicationId == applicationId && (a.Role.Value == RoleEnum.Economist || a.Role.Value == RoleEnum.AuditService)).Result;
+                    a.ApplicationId == applicationId && (a.Role.Value == RoleEnum.SalesDepartment || a.Role.Value == RoleEnum.AuditService)).Result;
             if (task == null || task.UserId == null)
                 throw new Exception("Не удалось найти пользователей");
             return (Guid)task.UserId;
         }
 
+        protected Guid GetUserByContractorId(Guid? contractorId)
+        {
+            var user = _baseLogic.Of<Shared.Data.Context.User>().Base()
+                .FirstOrDefaultAsync(a => a.ContractorId == contractorId
+                   ).Result;
+            if (user == null || user.Id == null)
+                throw new Exception("Не удалось найти пользователей");
+            return user.Id;
+        }
+
+
+
         public async Task SendApplicationToUser(ApplicationStatusInDto model, Guid currentUserId)
         {
             var role = await GetRoleByUserId(currentUserId);
-            var task = await GetCurrentUserTask(currentUserId);
+            var task = await GetCurrentUserTask(currentUserId, model.ApplicationId);
             var taskId = task.Id;
             var application = await GetApplicationById(model.ApplicationId);
 
@@ -92,66 +102,61 @@ namespace Charts.Shared.Logic.Workflow.Application
             {
                 if (model.Decision == ApplicationTaskStatusEnum.SUCCESS)
                 {
-                    if (model.UserId != null)
+                    switch (role)
                     {
-                        switch (role)
-                        {
-                            case RoleEnum.TorSpecialist:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, (Guid)model.UserId, RoleEnum.Counterparty, 
-                                    ApplicationStatusEnum.InRepair);
-                                break;
-                            case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.InRepair:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, currentUserId, RoleEnum.Counterparty,
-                                    ApplicationStatusEnum.DocumentCollect);
-                                break;
+                        case RoleEnum.TorSpecialist:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserByContractorId(application.ContractorsId), RoleEnum.Counterparty,
+                                ApplicationStatusEnum.InRepair);
+                            break;
+                        case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.InRepair:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, currentUserId, RoleEnum.Counterparty,
+                                ApplicationStatusEnum.DocumentCollect);
+                            break;
 
-                            case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.DocumentCollect && application.RepairType == RepairType.Complaint:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.AuditService),
-                                    RoleEnum.AuditService,
-                                    ApplicationStatusEnum.Agreement);
-                                break;
-                            case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.DocumentCollect && application.RepairType == RepairType.Operational:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.SalesDepartment), RoleEnum.SalesDepartment,
-                                    ApplicationStatusEnum.Agreement);
-                                break;
-                                /////
-                            case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.ReWork && application.RepairType == RepairType.Complaint:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId,  GetAuditServiceOrEconomistByApplicationId(model.ApplicationId), RoleEnum.AuditService,
-                                    ApplicationStatusEnum.Agreement);
-                                break;
-                            case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.ReWork && application.RepairType == RepairType.Operational:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetAuditServiceOrEconomistByApplicationId(model.ApplicationId), RoleEnum.Economist,
-                                    ApplicationStatusEnum.Agreement);
-                                break;
-                                //////
-                            case RoleEnum.AuditService:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.Economist), RoleEnum.Economist,
-                                    ApplicationStatusEnum.Agreement);
-                                break;
+                        case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.DocumentCollect && application.RepairType == RepairType.Complaint:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.AuditService),
+                                RoleEnum.AuditService,
+                                ApplicationStatusEnum.Agreement);
+                            break;
+                        case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.DocumentCollect && application.RepairType == RepairType.Operational:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.SalesDepartment), RoleEnum.SalesDepartment,
+                                ApplicationStatusEnum.Agreement);
+                            break;
+                        /////
+                        case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.ReWork && application.RepairType == RepairType.Complaint:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetAuditServiceOrEconomistByApplicationId(model.ApplicationId), RoleEnum.AuditService,
+                                ApplicationStatusEnum.Agreement);
+                            break;
+                        case RoleEnum.Counterparty when task.Status == ApplicationStatusEnum.ReWork && application.RepairType == RepairType.Operational:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetAuditServiceOrEconomistByApplicationId(model.ApplicationId), RoleEnum.SalesDepartment,
+                                ApplicationStatusEnum.Agreement);
+                            break;
+                        //////
+                        case RoleEnum.AuditService:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.Economist), RoleEnum.Economist,
+                                ApplicationStatusEnum.Agreement);
+                            break;
 
-                            case RoleEnum.SalesDepartment:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.Economist), RoleEnum.Economist,
-                                    ApplicationStatusEnum.Agreement);
-                                break;
+                        case RoleEnum.SalesDepartment:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.Economist), RoleEnum.Economist,
+                                ApplicationStatusEnum.Agreement);
+                            break;
 
-                            case RoleEnum.Economist:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.TorManager), RoleEnum.TorManager,
-                                    ApplicationStatusEnum.PaymentFormation);
-                                break;
+                        case RoleEnum.Economist:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.TorManager), RoleEnum.TorManager,
+                                ApplicationStatusEnum.PaymentFormation);
+                            break;
 
-                            case RoleEnum.TorManager:
-                                await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.Treasurer), RoleEnum.Treasurer,
-                                    ApplicationStatusEnum.Payment);
-                                break;
+                        case RoleEnum.TorManager:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, GetUserIdByApplicationIdAndRole(model.ApplicationId, RoleEnum.Treasurer), RoleEnum.Treasurer,
+                                ApplicationStatusEnum.Payment);
+                            break;
 
-                            case RoleEnum.Treasurer:
-                                taskId = await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, currentUserId, RoleEnum.Treasurer,
-                                    ApplicationStatusEnum.Paid);
-                                break;
-                        }
+                        case RoleEnum.Treasurer:
+                            await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, currentUserId, RoleEnum.Treasurer,
+                                ApplicationStatusEnum.Paid);
+                            break;
                     }
-                    else
-                        throw new Exception("Не указан конечный пользователь");
                 }
                 else
                 {
@@ -161,8 +166,10 @@ namespace Charts.Shared.Logic.Workflow.Application
                     if(conterpartyUser==default)
                         throw new Exception("Не указан Контрагент");
 
-                    await _applicationTaskLogic.InsertLoanApplicationTaskUser(model.ApplicationId, conterpartyUser.Id, RoleEnum.Counterparty,
-                        ApplicationStatusEnum.ReWork);
+                    if (conterpartyUser.UserId != null)
+                        await _applicationTaskLogic.InsertLoanApplicationTaskUser(application,
+                            (Guid) conterpartyUser.UserId, RoleEnum.Counterparty,
+                            ApplicationStatusEnum.ReWork);  
                 }
                 await _applicationTaskLogic.DeleteApplicationTask(taskId, model.Decision, model.Comment);
 
@@ -174,11 +181,12 @@ namespace Charts.Shared.Logic.Workflow.Application
             }
 
         }
-        public async Task CreateApplication(Guid appplicationId, Guid currentUserId)
+        public async Task CreateApplication(Guid applicationId, Guid currentUserId)
         {
             try
             {
-                await _applicationTaskLogic.InsertLoanApplicationTaskUser(appplicationId, currentUserId,
+                var application = await GetApplicationById(applicationId);
+                await _applicationTaskLogic.InsertLoanApplicationTaskUser(application, currentUserId,
                     RoleEnum.TorSpecialist, ApplicationStatusEnum.Draft);
             }
             catch (Exception e)

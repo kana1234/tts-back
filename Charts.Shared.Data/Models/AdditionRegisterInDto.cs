@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Charts.Shared.Data.Primitives;
 
 namespace Charts.Shared.Data.Models
@@ -7,6 +8,7 @@ namespace Charts.Shared.Data.Models
     {
         [Required]
         public string Login { get; set; }
+        public string Email { get; set; }
         public string LastName { get; set; }
         [Required]
         public string FirstName { get; set; }
@@ -17,5 +19,7 @@ namespace Charts.Shared.Data.Models
         public string Password { get; set; }
         [Required]
         public RoleEnum? RoleId { get; set; }
+
+        public Guid? ContractorId { get; set; }
     }
 }

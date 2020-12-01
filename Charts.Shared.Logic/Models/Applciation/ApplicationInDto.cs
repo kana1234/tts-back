@@ -18,7 +18,6 @@ namespace Charts.Shared.Logic.Models.Applciation
         public Guid? RepairPlaceId { get; set; }
 
         public Guid? ContractorsId { get; set; }
-        public ApplicationStatusEnum Status { get; set; }
         public Guid? DefectId { get; set; }
 
         [Required]
@@ -26,8 +25,7 @@ namespace Charts.Shared.Logic.Models.Applciation
         public List<Remarks> Remarks { get; set; }
         public string Description { get; set; }
 
-        [Required]
-        public bool WithReplacement { get; set; } = false;
-        public RepairType RepairType { get; set; }
+        public bool? WithReplacement { get; set; } = false;
+        public RepairType? RepairType { get; set; }
     }
 }

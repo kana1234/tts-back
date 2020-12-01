@@ -12,6 +12,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Charts.Shared.Data.Models;
+using Charts.Shared.Logic.Extensions;
 
 namespace Charts.Admin.Api.Controllers
 {
@@ -94,7 +95,7 @@ namespace Charts.Admin.Api.Controllers
         }
 
 
-        [HttpGet("GetUser")]
+        [HttpGet(nameof(GetUser) + "/{login}")]
         public async Task<IActionResult> GetUser(string login)
         {
             try
@@ -109,7 +110,7 @@ namespace Charts.Admin.Api.Controllers
             }
         }
 
-        [HttpGet("DeleteUser")]
+        [HttpGet(nameof(DeleteUser) + "/{login}")]
         public async Task<IActionResult> DeleteUser(string login)
         {
             try
@@ -141,7 +142,7 @@ namespace Charts.Admin.Api.Controllers
                     enumVals.Add(new
                     {
                         key = i.GetHashCode(),
-                        value = i.ToString()
+                        value = (i is RoleEnum ? (RoleEnum) i : (RoleEnum)1).GetDisplayName()
                     });
                 }
                 return Ok(enumVals);

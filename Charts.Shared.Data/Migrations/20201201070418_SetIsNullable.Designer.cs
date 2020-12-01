@@ -4,14 +4,16 @@ using Charts.Shared.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Charts.Shared.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20201201070418_SetIsNullable")]
+    partial class SetIsNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -185,6 +187,8 @@ namespace Charts.Shared.Data.Migrations
                     b.HasIndex("ApplicationId");
 
                     b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ApplicationTask");
                 });
@@ -577,6 +581,10 @@ namespace Charts.Shared.Data.Migrations
                     b.HasOne("Charts.Shared.Data.Context.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId");
+
+                    b.HasOne("Charts.Shared.Data.Context.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Charts.Shared.Data.Context.Remarks", b =>

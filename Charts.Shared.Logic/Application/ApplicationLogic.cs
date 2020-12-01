@@ -39,6 +39,7 @@ namespace Charts.Shared.Logic.Application
             actions.Add((dto, ent) => ent.UserId = dto.UserId ?? userId);
             if (model.Id != null && model.Id != Guid.Empty)
             {
+                await UpdateEndDateTime(model, userId);
                 var application = await _baseLogic.Of<Data.Context.Application>().Base().FirstOrDefaultAsync(a => a.Id == model.Id);
                 _ = _baseLogic.Of<Data.Context.Application>().Update(model.MapTo(application, actions));
                 return application.Id;
@@ -47,9 +48,32 @@ namespace Charts.Shared.Logic.Application
             var tmp = await _baseLogic.Of<Data.Context.Application>()
                 .Add(model.CreateMappedObject(actions)); 
             await GenerateRegNumber(tmp);
-
             await _applicationWorkflowLogic.CreateApplication(tmp, userId);
             return tmp;
+        }
+
+        protected async Task<Shared.Data.Context.ApplicationTask> GetCurrentUserTask(Guid userId)
+        {
+            var task = await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base().FirstOrDefaultAsync(a => a.UserId == userId && !a.IsDeleted);
+            return task;
+
+        }
+
+        private async Task UpdateEndDateTime(ApplicationInDto model, Guid userId)
+        {
+            if (model.WithReplacement != null)
+            {
+                var task = await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base().FirstOrDefaultAsync(a => a.UserId == userId && !a.IsDeleted);
+                var days = (bool)model.WithReplacement ? 19 : 9;
+                task.PlanEndDate = task.CreatedDate.AddDays(days);
+                await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Update(task);
+            }
+            if (model.RepairType != null)
+            {
+                var task = await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Base().FirstOrDefaultAsync(a => a.UserId == userId && !a.IsDeleted);
+                task.PlanEndDate = task.CreatedDate.AddDays(10);
+                await _baseLogic.Of<Shared.Data.Context.ApplicationTask>().Update(task);
+            }
         }
 
         public async Task<Guid> InsertOrUpdateRemark(RemarkInDto model, Guid userId)
@@ -99,11 +123,11 @@ namespace Charts.Shared.Logic.Application
         }
 
 
-        public async Task<object> SetRegNumber(RegNumberInDto model)
+        public async Task SetRegNumber(RegNumberInDto model)
         {
             var application = await _baseLogic.Of<Data.Context.Application>().GetById(model.Id);
             application.Number = model.RegNumber;
-            return _baseLogic.Of<Data.Context.Application>().Update(application);
+             await _baseLogic.Of<Data.Context.Application>().Update(application);
         }
 
         public async Task DeleteApplication(Guid userId, Guid applicationId)
@@ -166,7 +190,6 @@ namespace Charts.Shared.Logic.Application
                     case RoleEnum.AuditService when status == ApplicationStatusEnum.InWork:
                     case RoleEnum.Economist when status == ApplicationStatusEnum.InWork:
                     case RoleEnum.SalesDepartment when status == ApplicationStatusEnum.InWork:
-                    case RoleEnum.TorSpecialist when status == ApplicationStatusEnum.InWork:
                         applicationStatus = ApplicationStatusEnum.InWork;
                         _ = _.Where(a => a.Status == ApplicationStatusEnum.Agreement && a.UserId == userId);
                         break;
@@ -185,6 +208,10 @@ namespace Charts.Shared.Logic.Application
                         _ = _.Where(a => a.Status == status);
                         break;
                 }
+            }
+            else if(currentUserRole.Value == RoleEnum.Counterparty)
+            {
+                _ = _.Where(a =>  a.UserId == userId);
             }
 
             var res = _
@@ -233,12 +260,12 @@ namespace Charts.Shared.Logic.Application
         public async Task<object> GetContractorsUsers()
         {
 
-            return _ = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.RepairPlaceId != null && !x.IsDeleted)
-                .Include(a => a.RepairPlace)
+            return _ = await _baseLogic.Of<Data.Context.User>().GetQueryable(x => x.ContractorId != null && !x.IsDeleted)
+                .Include(a => a.Contractors)
                 .AsNoTracking().Select(x => new
                 {
                     x.Id,
-                    x.RepairPlace.NameRu
+                    x.Contractors.NameRu
                 })
                 .ToListAsync();
         }
@@ -274,6 +301,36 @@ namespace Charts.Shared.Logic.Application
 
         public async Task<object> Statistics(Guid userId)
         {
+            var currentUserRole = await _baseLogic.Of<Role>().Base()
+                .FirstOrDefaultAsync(a => a.UserRoles.Any(t => t.UserId == userId));
+            if (currentUserRole.Value == RoleEnum.Counterparty)
+            {
+                var contragentTasks = await _baseLogic.Of<Data.Context.ApplicationTask>()
+                    .GetQueryable(x => !x.IsDeleted && !x.Application.IsDeleted && x.UserId==userId)
+                    .Include(a => a.Application)
+                    .AsNoTracking()
+                    .GroupBy(x => x.Status)
+                    .Select(x => new
+                    {
+                        x.Key,
+                        Count = x.Count()
+                    })
+                    .ToListAsync();
+
+                return new
+                {
+                    All = contragentTasks.Sum(x => x.Count),
+                    Agreement = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.Agreement)?.Count ?? 0,
+                    DocumentCollect = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.DocumentCollect)?.Count ?? 0,
+                    Draft = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.Draft)?.Count ?? 0,
+                    InWork = 0,
+                    Paid = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.Paid)?.Count ?? 0,
+                    Payment = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.Payment)?.Count ?? 0,
+                    PaymentFormation = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.PaymentFormation)?.Count ?? 0,
+                    InRepair = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.InRepair)?.Count ?? 0,
+                    ReWork = contragentTasks.SingleOrDefault(x => x.Key == ApplicationStatusEnum.ReWork)?.Count ?? 0
+                };
+            }
             var r = await _baseLogic.Of<Data.Context.ApplicationTask>()
                 .GetQueryable(x => !x.IsDeleted && !x.Application.IsDeleted)
                 .Include(a=>a.Application)
@@ -285,15 +342,13 @@ namespace Charts.Shared.Logic.Application
                     Count = x.Count()
                 })
                 .ToListAsync();
-            var currentUserRole = await _baseLogic.Of<Role>().Base()
-                .FirstOrDefaultAsync(a => a.UserRoles.Any(t => t.UserId == userId));
+           
             var inWorkCount = 0;
             switch (currentUserRole.Value)
             {
                 case RoleEnum.AuditService:
                 case RoleEnum.Economist:
                 case RoleEnum.SalesDepartment:
-                case RoleEnum.TorSpecialist:
                     inWorkCount = r.SingleOrDefault(x => x.Key == ApplicationStatusEnum.Agreement)?.Count ?? 0;
                     break;
                 case RoleEnum.TorManager:

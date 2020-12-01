@@ -30,8 +30,8 @@ namespace Charts.Shared.Data.Context
         /// <summary>
         /// Идентификатор пользователя
         /// </summary>
-        [ForeignKey(nameof(UserId))]
-        public User User { get; set; }
+        //[ForeignKey(nameof(UserId))]
+        //public User User { get; set; }
         public Guid? UserId { get; set; }
 
         /// <summary>

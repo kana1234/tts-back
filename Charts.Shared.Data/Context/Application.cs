@@ -35,8 +35,8 @@ namespace Charts.Shared.Data.Context
         public DateTime ReleaseDate { get; set; }
         public DateTime? FinishDate { get; set; }
         public string Description { get; set; }
-        public bool WithReplacement { get; set; } = false;
-        public RepairType RepairType { get; set; }
+        public bool? WithReplacement { get; set; } = false;
+        public RepairType? RepairType { get; set; }
         public string InstanceId { get; set; }
         public ICollection<Remarks> Remarks { get; private set; } = new HashSet<Remarks>();
     }

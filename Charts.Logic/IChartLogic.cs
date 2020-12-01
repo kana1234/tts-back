@@ -7,6 +7,7 @@ namespace Charts.Logic
 {
     public interface IChartLogic
     {
-        
+
+        Task<object> GetExpiredContractors();
     }
 }
